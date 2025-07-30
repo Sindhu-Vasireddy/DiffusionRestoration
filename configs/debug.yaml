@@ -1,0 +1,89 @@
+rng_seed: 123
+float32_matmul_precision: high
+
+dataset:
+    target_path: "/p/tmp/hess/scratch/discriminator-guidance/datasets/era5_tp_1940_2022_daily_1deg.nc"
+    generated_path: "/p/tmp/hess/scratch/discriminator-guidance/datasets/era5_tp_1940_2022_daily_1deg.nc"
+    train_start: 1999
+    train_end: 2000
+    valid_start: 2001
+    valid_end: 2001
+    test_start: 2001
+    test_end: 2002
+
+    transforms: ["log", "normalize_minus1_to_plus1"]
+    lazy: false
+    epsilon: 0.00001
+
+    apply_padding: false
+    crop_lat_target: true
+    crop_lat_generated: true
+
+data_loader:
+    batch_size: 8
+    num_workers: 8
+    pin_memory: true
+    persistent_workers: true
+
+plot_valid_samples: true
+
+model:
+    dm_loss_weight:  0.0
+    lr: 0.0001
+    in_channels: 2
+    out_channels: 1
+    model_channels: 128
+    channel_mult:
+      - 1
+      - 2
+      - 2
+    channel_mult_emb: 2
+    num_res_blocks: 2
+    attention_resolution: [8]
+    #dims: 3
+    dims: 2
+    #pool: "patch"
+    #pool: "adaptive"
+    pool: "spatial"
+    additional_input: "difference"
+    sigma_data: 0.5
+    sigma_max: 80.0
+    sigma_min: 0.002
+    noise_old_state: false
+    forward_sde: "vp"
+    beta_0: 0.1
+    beta_1: 20.0
+    s: 0.008
+
+guidance:
+        enable_guidance: True
+        guidance_parameter_slope: 10
+        guidance_parameter_bias: 10
+        checkpoint_path: "/p/tmp/hess/scratch/discriminator-guidance/checkpoints/test_v26/best_model.ckpt"
+
+logger: "wandb"
+
+wandb:
+    project: discriminator-guidance
+    entity: generative-machine-learning
+    mode: offline
+    log_model: best
+    name: gd_n1_3d_patch_daily
+    save_dir: /p/tmp/hess/scratch/discriminator-guidance
+
+profiler:
+    dirpath: profiler/
+    filename: simple_profiler
+    extended: true
+
+checkpoints:
+    resume_ckpt_path: null
+    save_dir: /p/tmp/hess/scratch/discriminator-guidance/checkpoints
+
+trainer:
+    enable_progress_bar: true
+    log_every_n_steps: 10
+    max_epochs: 200
+    accelerator: cpu
+    devices: 1
+    num_nodes: 1

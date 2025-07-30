@@ -1,0 +1,33 @@
+paths:
+    config_dir: "/home/hess/projects/discriminator-guidance/configs"
+    output_dir: "/p/tmp/hess/scratch/discriminator-guidance/results/experiments/"
+    output_fname: "forecast_vorticity_guided.nc"
+    discriminator_config_fname: "guidance_vorticity.yaml"
+    diffusion_config_fname: "diffusion_vorticity_config.yaml"
+
+models:
+    discriminator_model_id: "uaur6d3c"
+    diffusion_model_id:  "vb0irh5e" 
+
+experiment:
+    forecast: true
+    noise_shape: [50, 1, 256, 256]
+    variable_name: "vorticity"
+    use_conditioning: false
+    use_past_state: true
+    use_past_2_state: false
+    num_diffusion_steps: 50
+    num_rollout_steps: 10
+    num_forecasts: 100
+    guidance_weight: 14
+    s_noise: 1.001
+    s_churn: 55
+    noise_delta: 0.0
+    epsilon_scaling: 1.0
+    t_min: 0.0
+    to_physical: true
+    to_xarray: true
+    num_samples: 1
+    show_progress: false
+    show_rollout_progress: true
+    flush_output_dir: null

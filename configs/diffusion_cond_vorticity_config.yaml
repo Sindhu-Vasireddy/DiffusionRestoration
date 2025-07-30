@@ -1,0 +1,82 @@
+rng_seed: 123
+float32_matmul_precision: high
+
+dataset:
+    dataset_path: "/p/tmp/hess/scratch/discriminator-guidance/datasets/vorticity_sub_4_2000_2245.nc"
+    train_start: 2000
+    train_end: 2129
+    valid_start: 2130
+    valid_end: 2164
+    test_start: 2130
+    test_end: 2164
+    transforms: ["standardize", "normalize_minus1_to_plus1"]
+    lazy: false
+    epsilon: 0.00001
+
+    apply_padding: false
+    crop_lat_target: false
+    conditional: true
+    target_variable: "vorticity"
+
+data_loader:
+    batch_size: 2
+    num_workers: 8
+    pin_memory: true
+    persistent_workers: true
+    drop_last: true
+
+model: "diffusion"
+
+plot_validation_samples: false
+
+diffusion:
+    sigma_data: 0.5
+    sigma_max: 80.0
+    sigma_min: 0.002
+    loss_weights: uniform
+
+diffusion_network:
+    in_channels: 3
+    out_channels: 1
+    model_channels: 128
+    channel_mult:
+      - 1
+      - 2
+      - 2
+    channel_mult_emb: 3
+    num_blocks: 3
+    attn_resolutions: [8,4]
+    circular_height: true
+
+scheduler:
+    learning_rate: 0.0001
+    warmup_epochs: 2
+    max_epochs: 10
+
+logger: "wandb"
+
+wandb:
+    project: discriminator-guidance
+    entity: generative-machine-learning
+    mode: offline
+    log_model: best
+    name: dm_cond_vorticity_sub4_periodic_v1
+    save_dir: /p/tmp/hess/scratch/discriminator-guidance
+
+profiler:
+    dirpath: profiler/
+    filename: simple_profiler
+    extended: true
+
+checkpoints:
+    resume_ckpt_path: null
+    save_dir: /p/tmp/hess/scratch/discriminator-guidance/checkpoints
+
+trainer:
+    enable_progress_bar: true
+    log_every_n_steps: 10
+    max_epochs: 650
+    accelerator: gpu
+    strategy: auto
+    devices: 1
+    num_nodes: 1

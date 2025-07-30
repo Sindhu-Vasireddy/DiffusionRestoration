@@ -1,0 +1,84 @@
+rng_seed: 123
+float32_matmul_precision: high
+
+dataset:
+    dataset_path: "/p/tmp/hess/scratch/discriminator-guidance/datasets/era5_tp_1940_2022_daily_1deg.nc"
+    train_start: 1979
+    train_end: 2000
+    valid_start: 2001
+    valid_end: 2010
+    test_start: 2011
+    test_end: 2022
+    transforms: ["log", "normalize_minus1_to_plus1"]
+    lazy: false
+    epsilon: 0.00001
+
+    apply_padding: false
+    crop_lat_target: true
+    conditional: true
+    target_variable: "precipitation"
+
+data_loader:
+    batch_size: 2
+    num_workers: 8
+    pin_memory: true
+    persistent_workers: true
+    drop_last: true
+
+model: "diffusion"
+
+plot_validation_samples: false
+
+diffusion:
+    sigma_data: 0.5
+    sigma_max: 80.0
+    sigma_min: 0.002
+    loss_weights: uniform
+
+diffusion_network:
+    in_channels: 5
+    out_channels: 1
+    model_channels: 64
+    channel_mult:
+      - 1
+      - 2
+      - 2
+    channel_mult_emb: 2
+    num_blocks: 2
+    attn_resolutions: [8,4]
+    circular_height: false
+    circular_width: true
+    use_grid_embedding: true
+
+scheduler:
+    learning_rate: 0.0001
+    warmup_epochs: 2
+    max_epochs: 10
+
+logger: "wandb"
+
+wandb:
+    project: discriminator-guidance
+    entity: generative-machine-learning
+    mode: offline
+    log_model: best
+    name: dm_cond_daily_1deg_v3
+    save_dir: /p/tmp/hess/scratch/discriminator-guidance
+
+profiler:
+    dirpath: profiler/
+    filename: simple_profiler
+    extended: true
+
+checkpoints:
+    resume_ckpt_path: null
+    save_dir: /p/tmp/hess/scratch/discriminator-guidance/checkpoints
+
+trainer:
+    enable_progress_bar: true
+    log_every_n_steps: 10
+    max_epochs: 850
+    accelerator: gpu
+    strategy: auto
+    devices: 1
+    num_nodes: 1
