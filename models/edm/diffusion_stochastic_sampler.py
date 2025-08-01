@@ -48,7 +48,7 @@ class GuidedKarrasSampler(torch.nn.Module):
 
         integration_steps = zip(self.sigma_t_steps[:-1], self.sigma_t_steps[1:])
         if show_progress:
-            integration_steps = self.progress_bar(integration_steps, self.num_diffusion_steps, index)
+            integration_steps = self.progress_bar(integration_steps, self.num_diffusion_steps)
 
         for i, (sigma_t_cur, sigma_t_next) in enumerate(integration_steps):
             x_cur = x_next.detach().clone()
@@ -85,12 +85,12 @@ class GuidedKarrasSampler(torch.nn.Module):
         sigma_t_steps = torch.cat([self.round_sigma(sigma_t_steps), torch.zeros_like(sigma_t_steps[:1])])
         return sigma_t_steps
 
-    def progress_bar(self, steps, length, index):
+    def progress_bar(self, steps, length):
         """Creates a progress bar for the sampling process."""
         integration_steps = tqdm(
             steps,
             total=length,
-            desc=f"Generating sample {index}",
+            desc=f"Generating.. ",
             dynamic_ncols=True,
             file=sys.stdout,
             leave=False
