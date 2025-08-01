@@ -1,84 +1,80 @@
 import numpy as np
 import xarray as xr
+import torch
 
 
 class Transform():
 
     def __init__(self, target_data, config):
-
         self.target_data = target_data
         self.config = config
         self.epsilon = config["epsilon"]
 
+        self.is_tensor = isinstance(self.target_data, torch.Tensor)
+        self.is_xarray = isinstance(self.target_data, xr.DataArray)
+
         if "log" in config["transforms"]:
-            # for subsquent normalization transformation
             self.target_data = self.log_transform(self.target_data)
 
         if "standardize" in config["transforms"]:
-            self.target_mean = self.target_data.mean(dim="time")
-            self.target_std = self.target_data.std(dim="time")
-            # for subsquent normalization transformations
+            self._compute_mean_std(self.target_data)
+
             self.target_data = self.standardize(self.target_data)
-        
-        if "normalize_minus1_to_plus1" in self.config["transforms"]:
-            self.target_min = self.target_data.min()
-            self.target_max = self.target_data.max()
-    
-    def log_transform(self, x: xr.DataArray) -> xr.DataArray:
-        return np.log(x + self.epsilon) - np.log(self.epsilon)
 
-    def inv_log_transform(self, x: xr.DataArray) -> xr.DataArray:
-        return np.exp(x + np.log(self.epsilon)) - self.epsilon
+        if "normalize_minus1_to_plus1" in config["transforms"]:
+            self._compute_min_max(self.target_data)
 
-    def standardize(self, x: xr.DataArray) -> xr.DataArray:
-        return (x - self.target_mean) / self.target_std
+    def _compute_mean_std(self, x):
+        self.target_mean = x.mean(dim="time")
+        self.target_std = x.std(dim="time")
 
-    def inv_standardize(self, x: xr.DataArray) -> xr.DataArray:
-        x = (x * self.target_std) + self.target_mean
-        return x
+        self.target_mean_tensor = torch.tensor(self.target_mean.values, device="cuda")
+        self.target_std_tensor = torch.tensor(self.target_std.values, device="cuda")
 
-    def norm_minus1_to_plus1_transform(self, x: xr.DataArray) -> xr.DataArray:
-        x = (x - self.target_min) / (self.target_max - self.target_min)
-        x = x * 2 - 1
-        return x
+    def _compute_min_max(self, x):
+        self.target_min = x.min()
+        self.target_max = x.max()
 
-    def inv_norm_minus1_to_plus1_transform(self, x: xr.DataArray) -> xr.DataArray:
+        self.target_min_tensor = torch.tensor(self.target_min.values, device="cuda")
+        self.target_max_tensor = torch.tensor(self.target_max.values, device="cuda")
+
+    def standardize(self, x):
+        if isinstance(x, torch.Tensor):
+            return (x - self.target_mean_tensor) / self.target_std_tensor
+        else:
+            return (x - self.target_mean) / self.target_std
+
+    def inv_standardize(self, x):
+        if isinstance(x, torch.Tensor):
+            return (x * self.target_std_tensor) + self.target_mean_tensor
+        else:
+            return (x * self.target_std) + self.target_mean
+
+    def norm_minus1_to_plus1_transform(self, x):
+        if isinstance(x, torch.Tensor):
+            x = (x - self.target_min_tensor) / (self.target_max_tensor - self.target_min_tensor)
+        else:
+            x = (x - self.target_min) / (self.target_max - self.target_min)
+        return x * 2 - 1
+
+    def inv_norm_minus1_to_plus1_transform(self, x):
         x = (x + 1) / 2
-        x = x * (self.target_max - self.target_min) + self.target_min
-        return x
+        if isinstance(x, torch.Tensor):
+            return x * (self.target_max_tensor - self.target_min_tensor) + self.target_min_tensor
+        else:
+            return x * (self.target_max - self.target_min) + self.target_min
 
-    def apply_transforms(self, x: xr.DataArray) -> xr.DataArray:
-        """Apply a sequence of transformations given a training set reference
-
-        Args:
-            x: Data to be transformed
-
-        Returns:
-            The transformed data
-
-        """
-
-        if "log" in self.config["transforms"]:
-            x = self.log_transform(x)
+    def apply_transforms(self, x):
 
         if "standardize" in self.config["transforms"]:
             x = self.standardize(x)
 
         if "normalize_minus1_to_plus1" in self.config["transforms"]:
-            data = self.norm_minus1_to_plus1_transform(x)
+            x = self.norm_minus1_to_plus1_transform(x)
 
-        return data
+        return x
 
-    def apply_inverse_transforms(self, x: xr.DataArray):
-        """Apply a sequence of inverese transformations given a training set reference
-
-        Args:
-            x: Data to be transformed
-
-        Returns:
-            The transformed data
-
-        """
+    def apply_inverse_transforms(self, x):
 
         if "normalize_minus1_to_plus1" in self.config["transforms"]:
             x = self.inv_norm_minus1_to_plus1_transform(x)
@@ -86,10 +82,8 @@ class Transform():
         if "standardize" in self.config["transforms"]:
             x = self.inv_standardize(x)
 
-        if "log" in self.config["transforms"]:
-            x = self.inv_log_transform(x)
-
         return x
+
 
 
 def apply_transforms(

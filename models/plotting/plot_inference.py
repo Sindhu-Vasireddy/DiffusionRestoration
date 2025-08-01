@@ -5,8 +5,8 @@ import cartopy.feature as cfeature
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 from xskillscore import pearson_r
-from correlation import autocorr
-from metrics import compute_wasserstein_distance
+from models.correlation import autocorr
+from models.metrics import compute_wasserstein_distance
 
 
 def plot_frames(frame_new, frame_old, main_title, vmax=0.005):

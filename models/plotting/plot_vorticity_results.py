@@ -8,8 +8,8 @@ import matplotlib.colors as mcolors
 import matplotlib.lines as mlines
 from matplotlib.ticker import ScalarFormatter
 
-from src.correlation import autocorr
-from src.metrics import compute_wasserstein_distance, compute_crps_for_lead_times
+from models.correlation import autocorr
+from models.metrics import compute_wasserstein_distance, compute_crps_for_lead_times
 
 def plot_vorticity_hovmoeller_diagram(data, names, plot_config, fname):
 

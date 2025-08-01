@@ -53,6 +53,8 @@ class PositionalEmbedding(torch.nn.Module):
         self.endpoint = endpoint
 
     def forward(self, t: Tensor):
+        if t.ndim == 0:
+            t = t[None]
         freqs = torch.arange(
             start=0, end=self.num_channels // 2, dtype=torch.float32, device=t.device
         )

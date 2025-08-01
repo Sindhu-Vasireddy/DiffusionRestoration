@@ -5,7 +5,7 @@ from tqdm import tqdm
 from scipy.stats import wasserstein_distance
 from sklearn.decomposition import PCA
 
-from src.xarray_utils import remove_seasonality
+from models.xarray_utils import remove_seasonality
 
 
 def compute_crps(target: xr.DataArray, forecasts: xr.DataArray, weighted: bool=False) -> np.ndarray:
