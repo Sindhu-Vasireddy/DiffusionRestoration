@@ -8,7 +8,7 @@ class GuidedKarrasSampler(torch.nn.Module):
 
     Adapted from references:
     Yao and Mammadov et al. 2025: https://github.com/neuraloperator/FunDPS/blob/main/generation/dps.py
-    Chung et al., 2023: https://github.com/DPS2022/diffusion-posterior-sampling
+    Chung et al., 2022: https://github.com/DPS2022/diffusion-posterior-sampling
     """
 
     def __init__(
@@ -69,7 +69,8 @@ class GuidedKarrasSampler(torch.nn.Module):
             # Apply guidance
             if self.guidance is not None:
                 grad = self.guidance.get_weighted_gradient(x_cur, x_N, retain_graph=False)
-                x_next = x_next - self.sigma_t_steps[i].item() * grad
+                #x_next = x_next - self.sigma_t_steps[i].item() * grad
+                x_next = x_next - sigma_t * grad
 
             if x_next.isnan().any():
                 print(f"\nStep {i}: NaN detected!")
