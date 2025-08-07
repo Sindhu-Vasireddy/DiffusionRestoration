@@ -38,7 +38,6 @@ class DiffusionDatasetWrapper(torch.utils.data.Dataset):
         dataset: A PyTorch dataset.
         fixed_noise: If True, the noise is generated during the first epoch and then reused.
             Using the same noise for each sample in the dataset is useful for validation.
-        reduce_to_vector: samples noise with shape (batch size, 1, H*W//2)
     """
 
     def __init__(
@@ -60,7 +59,7 @@ class DiffusionDatasetWrapper(torch.utils.data.Dataset):
         return len(self.dataset)-2
 
     def __getitem__(self, index) -> dict[str, torch.Tensor]:
-
+        
         if index < 2:
             index = 2
 

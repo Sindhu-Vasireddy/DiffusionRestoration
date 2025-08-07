@@ -4,7 +4,7 @@ from tqdm.notebook import tqdm
 
 
 class GuidedKarrasSampler(torch.nn.Module):
-    """ Guided Karras Stochastic Sampler for diffusion models using Tweedies formular.
+    """ Guided solver for diffusion models using posterior sampling.
 
     Adapted from references:
     Yao and Mammadov et al. 2025: https://github.com/neuraloperator/FunDPS/blob/main/generation/dps.py
@@ -33,8 +33,18 @@ class GuidedKarrasSampler(torch.nn.Module):
         self.device = denoiser.device
 
 
-    def sample(self, x_current, x_past, index=0, show_progress=True):
-        """Generate a single batch of samples."""
+    def sample(self, x_current, x_past, show_progress=True):
+        """Generate a single batch of samples.
+
+        Args:
+            x_current: Current state of the physical system.
+            x_past: Past state of the physical system.
+            show_progress: Whether to show a progress bar.
+
+        Returns:
+            x_final: Final sample prediction.
+
+        """
 
         # Initialize latents
         latents = torch.randn_like(x_current)
@@ -69,8 +79,7 @@ class GuidedKarrasSampler(torch.nn.Module):
             # Apply guidance
             if self.guidance is not None:
                 grad = self.guidance.get_weighted_gradient(x_cur, x_N, retain_graph=False)
-                #x_next = x_next - self.sigma_t_steps[i].item() * grad
-                x_next = x_next - sigma_t * grad
+                x_next = x_next - self.sigma_t_steps[i].item() * grad
 
             if x_next.isnan().any():
                 print(f"\nStep {i}: NaN detected!")
@@ -80,14 +89,17 @@ class GuidedKarrasSampler(torch.nn.Module):
         return x_final
     
     def get_sigma_schedule(self):
-        """Returns a tensor of sigma steps for the diffusion process."""
+        """Returns a tensor of sigma noise steps for the diffusion process."""
+
         step_indices = torch.arange(self.num_diffusion_steps, dtype=torch.float64, device=self.device)
         sigma_t_steps = (self.sigma_max ** (1 / self.rho) + step_indices / (self.num_diffusion_steps - 1) * (self.sigma_min ** (1 / self.rho) - self.sigma_max ** (1 / self.rho))) ** self.rho
         sigma_t_steps = torch.cat([self.round_sigma(sigma_t_steps), torch.zeros_like(sigma_t_steps[:1])])
+
         return sigma_t_steps
 
     def progress_bar(self, steps, length):
         """Creates a progress bar for the sampling process."""
+
         integration_steps = tqdm(
             steps,
             total=length,

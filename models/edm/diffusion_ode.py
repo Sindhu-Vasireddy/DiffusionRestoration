@@ -35,7 +35,6 @@ class KarrasODE(torch.nn.Module):
         x: torch.Tensor,
         y0: torch.Tensor,
         c: torch.Tensor) -> torch.Tensor:
-
         """Integrates the specified ODE over x and returns the y trajectory."""
 
         # Apply Euler step with 2nd order correction.

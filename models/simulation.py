@@ -22,11 +22,6 @@ class SamplingConfig:
     num_rollout_steps: int = 3
     num_diffusion_steps: int = 100
 
-    s_noise: float = 1.0
-    s_churn: float = 2.5
-    s_min: float = 0.0
-    s_max: float = 100.0
-
     boosting: bool = False
 
     show_progress: bool = True
@@ -38,22 +33,27 @@ class SamplingConfig:
 
 
 class Simulation():
-    """ Samples from guided, conditional and unconditional diffusion models. """
+    """ Samples from guided, conditional and unconditional diffusion models. 
+    
+    Args:
+        diffusion_config_path: Path to the diffusion model configuration file.
+        diffusion_model_checkpoint_path: Path to the diffusion model checkpoint file.
+        noise_shape: Shape of the noise tensor used for sampling.
+        variable_name: Name of the variable in the dataset to be sampled.
+    """
     
     def __init__(self,
                  diffusion_config_path: str,
-                 diffusion_model_id: str,
+                 diffusion_model_checkpoint_path: str,
                  noise_shape: tuple,
                  variable_name: str,
-                 discriminator_model_id: str = None,
                  ):
         
         self.diffusion_config = read_yaml(diffusion_config_path)
         self.noise_shape = noise_shape
         self.variable_name = variable_name
-        self.diffusion_checkpoint_path=f"/p/tmp/hess/scratch/discriminator-guidance/checkpoints/dm_{diffusion_model_id}/best.ckpt"
+        self.diffusion_checkpoint_path = diffusion_model_checkpoint_path
         self.parameters = {} 
-
 
     def load_data(self):
         """ Loads the data and precomputes training transforms and initial condition. """
@@ -75,16 +75,14 @@ class Simulation():
         self.x_past = self.prepare_state(self.target_test_transformed[1])
         self.x_current = self.prepare_state(self.target_test_transformed[2])
 
-
     def prepare_state(self, state, device="cuda"):
         """ Prepares the state for the diffusion model initialization. """
         state = torch.from_numpy(state.values).unsqueeze(0).unsqueeze(0).to(device)
         state = state.repeat(self.noise_shape[0], 1, 1, 1)
         return state    
 
-
     def initialize(self):
-        """ Initializes data and diffusion network."""
+        """ Initializes data and diffusion model."""
 
         self.load_data()
 
@@ -96,11 +94,13 @@ class Simulation():
                    )
 
         self.inference.initialize_model()
-    
 
     def run(self, sampling_config):
-        
-        """ Samples from the diffusion model. """
+        """ Samples from the diffusion model. 
+
+        Args:
+            sampling_config: Sampling configuration object.
+        """
 
         self.inference.rollout(
             sampling_config,
@@ -112,7 +112,8 @@ class Simulation():
 
 
     def save_output(self, dataset:xr.DataArray, save_path: str, config=None):
-        #dataset = self.inference.predictions
+        """ Saves the output dataset to disk."""
+
         if config is not None:
             dataset.attrs["guidance"] = yaml.dump(recursive_convert(config))
         dataset = dataset.to_dataset(name=self.variable_name)
@@ -123,6 +124,7 @@ class Simulation():
 
 
 def get_unique_filename(save_path):
+    """Generates a unique filename by appending a counter if the file already exists."""
     base, ext = os.path.splitext(save_path)
     counter = 1  
     
