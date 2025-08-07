@@ -69,7 +69,6 @@ target/
 
 # Jupyter Notebook
 jupyter.sh
-notebooks
 .ipynb_checkpoints
 
 # pyenv
@@ -108,7 +107,6 @@ data
 input/
 saved/
 datasets/
-notebooks/
 wandb/
 profiler/
 checkpoints/
