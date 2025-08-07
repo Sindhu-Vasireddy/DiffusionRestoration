@@ -33,8 +33,9 @@ class DiffusionInference:
         self.diagnostics = diagnostics
         self.noise_shape = noise_shape
         self.init_latents = torch.randn(noise_shape)
+        self.guidance = None
 
-    def get_model(self):
+    def initialize_model(self):
         """Load model from checkpoint."""
 
         checkpoint = torch.load(self.checkpoint_path)
@@ -53,9 +54,16 @@ class DiffusionInference:
         self.model.model_ema.load_state_dict(checkpoint["ema_state_dict"])
         self.model.to("cuda")
 
+    def initialize_guidance(self, gamma: float):
+        self.guidance = Guidance(measurement=torch.tensor([4.0],
+                                 device="cuda"),
+                                 transforms=self.transforms,
+                                 gamma=gamma,
+                                 loss_type="mse")
+
     def rollout(
         self,
-        config,
+        sample_config,
         x_current,
         x_past,
     ):
@@ -65,31 +73,24 @@ class DiffusionInference:
             inference_n_steps: Number of ODE integration steps for sampling.
             num_batches: Number of batches to sample
         """
-        guidance = Guidance(measurement=torch.tensor([4.0],
-                            device=x_current.device),
-                            transforms=self.transforms,
-                            gamma=config.gamma,
-                            loss_type="mse")
 
         sampler = GuidedKarrasSampler(
-                num_diffusion_steps=config.num_diffusion_steps,
+                num_diffusion_steps=sample_config.num_diffusion_steps,
                 denoiser=self.model,
-                use_conditioning=config.use_conditioning,
-                guidance=guidance,
+                use_conditioning=sample_config.use_conditioning,
+                guidance=self.guidance,
             )
 
-
-        num_steps = range(config.num_rollout_steps)
-        if  config.show_rollout_progress:   
-            i = 0
-            num_steps = self.progress_bar(num_steps, config.num_rollout_steps, i)
+        num_steps = range(sample_config.num_rollout_steps)
+        if  sample_config.show_rollout_progress:   
+            num_steps = self.progress_bar(num_steps, sample_config.num_rollout_steps)
 
         predictions = []
         for i in num_steps:
             prediction = sampler.sample(x_current=x_current,
                                         x_past=x_past,
                                         index=i+1,
-                                        show_progress=config.show_progress)
+                                        show_progress=sample_config.show_progress)
             x_past = x_current
             x_current = prediction
 
@@ -99,20 +100,20 @@ class DiffusionInference:
                 predictions.append(prediction.cpu())
 
             # free memory by writing predictions to disk
-            if config.flush_output_dir is not None and i % 365 == 0:
-                predictions = self.flush_output(config, i, predictions)
+            if sample_config.flush_output_dir is not None and i % 365 == 0:
+                predictions = self.flush_output(sample_config, i, predictions)
 
         self.predictions = torch.cat(predictions, dim=0)
-        if config.to_xarray:
+        if sample_config.to_xarray:
             self.predictions = self.convert_to_xarray(self.predictions)
-        if config.to_physical:
+        if sample_config.to_physical:
             self.predictions = self.transforms.apply_inverse_transforms(self.predictions)
 
-    def progress_bar(self, steps, length, index):
+    def progress_bar(self, steps, length):
         num_steps = tqdm(
                 steps,
                 total=length,
-                desc=f"Sample {index}",
+                desc=f"Sample count",
                 dynamic_ncols=True,
                 file=sys.stdout,
                 leave=False
