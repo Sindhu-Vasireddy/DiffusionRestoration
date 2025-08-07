@@ -17,7 +17,6 @@ class SamplingConfig:
     """ Default sampling configuration """
 
     use_conditioning: bool = False
-    gamma : float = 1.0
     use_past_state: bool = True
 
     num_rollout_steps: int = 3
@@ -96,7 +95,7 @@ class Simulation():
                         noise_shape=self.noise_shape,
                    )
 
-        self.inference.get_model()
+        self.inference.initialize_model()
     
 
     def run(self, sampling_config):
