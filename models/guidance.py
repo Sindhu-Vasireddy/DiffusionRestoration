@@ -1,8 +1,5 @@
 import torch 
 
-def l2_loss(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-    return torch.sqrt(torch.sum((prediction - target)**2, dim=(-2, -1))).mean()
-
 class Guidance:
     """Guidance class for computing the weighted gradient for the diffusion model."""
     def __init__(self, measurement, transforms, loss_type, gamma=0.0):
@@ -20,12 +17,25 @@ class Guidance:
         elif type == "l2":
             return l2_loss
 
+    def mean_constraint(self, prediction:torch.Tensor) -> torch.Tensor:
+        """Computes a mean constraint and returns the loss """
+
+        loss = self.loss(prediction.mean()[None], self.measurement.double())
+
+        return loss
+
     def get_weighted_gradient(self, state, prediction, retain_graph=False):
         """Computes the weighted gradient of the denoised prediction with respect to the
         state of the diffusion process."""
 
-        denorm_prediction = self.transforms.apply_inverse_transforms(prediction)
-        loss = self.loss(denorm_prediction.mean()[None], self.measurement.double())
+        prediction_no_trafo = self.transforms.apply_inverse_transforms(prediction)
+
+        loss = self.mean_constraint(prediction_no_trafo)
+
         grad = torch.autograd.grad(loss, state, retain_graph=retain_graph)[0]
 
         return (grad * self.gamma)
+
+
+def l2_loss(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    return torch.sqrt(torch.sum((prediction - target)**2, dim=(-2, -1))).mean()
