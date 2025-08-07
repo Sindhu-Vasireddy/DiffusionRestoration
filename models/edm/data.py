@@ -5,9 +5,9 @@ import lightning
 import numpy as np
 from typing import Optional, Dict, Any
 
-from src.transforms import apply_transforms
-import src.xarray_utils as xu
-from src.edm.diffusion_dataset import DiffusionDatasetWrapper
+from models.transforms import apply_transforms
+import models.xarray_utils as xu
+from models.edm.diffusion_dataset import DiffusionDatasetWrapper
 
 
 class DataModule(lightning.LightningDataModule):
@@ -61,7 +61,14 @@ class DataModule(lightning.LightningDataModule):
 
 
 class DiffusionDataset(torch.utils.data.Dataset):
-    """Dataset for ESM simulation and ERA5 reanalysis"""
+    """Dataset for training.
+    
+    Args:
+        stage: Stage of the dataset (train, valid, test).
+        config: Configuration dictionary containing dataset settings.
+        epsilon: Small value to avoid division by zero in normalization.
+        transform_esm_with_target_reference: Whether to apply transformations with reference to the target data.
+    """
 
     def __init__(
         self,
@@ -70,13 +77,6 @@ class DiffusionDataset(torch.utils.data.Dataset):
         epsilon=0.0001,
         transform_esm_with_target_reference=False,
     ):
-        """
-        stage: Train, valid or test.
-        dataset_name: Either ESM or ERA5.
-        config: Model configuration dataclass
-        epsilon: Small constant for the log transform
-        transform_esm_with_target_reference: Use target dataset to tranform the ESM data.
-        """
         self.stage = stage
         self.config = config
         self.transforms = config["transforms"]

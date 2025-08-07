@@ -33,13 +33,8 @@ class DiffusionModel(lightning.LightningModule):
         self.config = config
         self.save_hyperparameters({**config})
 
-        #if "use_grid_embedding" in self.config["diffusion_network"]:
-        #    if self.config["diffusion_network"]["use_grid_embedding"]:
-        #        self.config["diffusion_network"]["in_channels"] += 2
 
         net = PeriodicSongUNet(img_resolution=60, **self.config["diffusion_network"])
-        #self.config["diffusion_network"].pop("circular_height", None)
-        #net = SongUNet(img_resolution=60, **self.config["diffusion_network"])
         self.model = KarrasDenoiser(model=net, sigma_data=config["diffusion"]["sigma_data"]) 
         self.model_ema = copy.deepcopy(self.model).eval().requires_grad_(False)
 
