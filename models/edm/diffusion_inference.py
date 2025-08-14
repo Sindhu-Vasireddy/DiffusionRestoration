@@ -96,6 +96,7 @@ class DiffusionInference:
         for i in num_steps:
             prediction = sampler.sample(x_current=x_current,
                                         x_past=x_past,
+                                        sample_index=i,
                                         show_progress=sample_config.show_progress)
             x_past = x_current
             x_current = prediction
@@ -131,7 +132,7 @@ class DiffusionInference:
                 desc=f"Sample count",
                 dynamic_ncols=True,
                 file=sys.stdout,
-                leave=False
+                #leave=False
             )
         return num_steps
 
