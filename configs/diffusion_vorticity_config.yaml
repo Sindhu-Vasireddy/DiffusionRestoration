@@ -2,8 +2,8 @@ rng_seed: 123
 float32_matmul_precision: high
 
 dataset:
-    dataset_path: "/p/tmp/hess/scratch/discriminator-guidance/datasets/vorticity_sub_4_2000_2245.nc"
-    #dataset_path: "/p/tmp/hess/scratch/discriminator-guidance/datasets/vorticity_2000_2246.nc"
+    dataset_path: "/p/tmp/hess/scratch/constrained-generation/datasets/vorticity_large_256.nc"
+    #dataset_path: "/p/tmp/hess/scratch/constrained-generation/datasets/vorticity_small_64.nc"
     train_start: 2000
     train_end: 2129
     valid_start: 2130
@@ -16,11 +16,11 @@ dataset:
 
     apply_padding: false
     crop_lat_target: false
-    conditional: false
+    conditional: true
     target_variable: "vorticity"
 
 data_loader:
-    batch_size: 2
+    batch_size: 64
     num_workers: 8
     pin_memory: true
     persistent_workers: true
@@ -37,15 +37,15 @@ diffusion:
     loss_weights: uniform
 
 diffusion_network:
-    in_channels: 1
+    in_channels: 3
     out_channels: 1
     model_channels: 128
     channel_mult:
       - 1
       - 2
       - 2
-    channel_mult_emb: 3
-    num_blocks: 3
+    channel_mult_emb: 2
+    num_blocks: 2
     attn_resolutions: [8,4]
     circular_height: true
 
@@ -61,7 +61,7 @@ wandb:
     entity: generative-machine-learning
     mode: offline
     log_model: best
-    name: dm_vorticity_sub4_periodic_v1
+    name: dm_cond_vorticity_nonsub_periodic_v1
     save_dir: /p/tmp/hess/scratch/discriminator-guidance
 
 profiler:
@@ -71,7 +71,9 @@ profiler:
 
 checkpoints:
     resume_ckpt_path: null
-    save_dir: /p/tmp/hess/scratch/discriminator-guidance/checkpoints
+    save_dir: /p/tmp/hess/scratch/constrained-generation/checkpoints
+    #inference_ckpt: /p/tmp/hess/scratch/constrained-generation/checkpoints/dm_90sm313k/best.ckpt
+    inference_ckpt: /p/tmp/hess/scratch/constrained-generation/checkpoints/dm_aq2nib68/best.ckpt
 
 trainer:
     enable_progress_bar: true

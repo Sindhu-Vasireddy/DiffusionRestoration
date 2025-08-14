@@ -33,7 +33,7 @@ class GuidedKarrasSampler(torch.nn.Module):
         self.device = denoiser.device
 
 
-    def sample(self, x_current, x_past, show_progress=True):
+    def sample(self, x_current, x_past, sample_index, show_progress=True):
         """Generate a single batch of samples.
 
         Args:
@@ -78,7 +78,7 @@ class GuidedKarrasSampler(torch.nn.Module):
 
             # Apply guidance
             if self.guidance is not None:
-                grad = self.guidance.get_weighted_gradient(x_cur, x_N, retain_graph=False)
+                grad = self.guidance.get_weighted_gradient(x_cur, x_N, time_index=sample_index, retain_graph=False)
                 x_next = x_next - self.sigma_t_steps[i].item() * grad
 
             if x_next.isnan().any():

@@ -25,7 +25,7 @@ class SamplingConfig:
     boosting: bool = False
 
     show_progress: bool = True
-    show_rollout_progress: bool = False
+    show_rollout_progress: bool = True
     to_physical: bool = True
     to_xarray: bool = True
 
@@ -36,23 +36,25 @@ class Simulation():
     """ Samples from guided, conditional and unconditional diffusion models. 
     
     Args:
-        diffusion_config_path: Path to the diffusion model configuration file.
-        diffusion_model_checkpoint_path: Path to the diffusion model checkpoint file.
+        #diffusion_config_path: Path to the diffusion model configuration file.
+        #diffusion_model_checkpoint_path: Path to the diffusion model checkpoint file.
+        config: Diffusion model configuration.
         noise_shape: Shape of the noise tensor used for sampling.
         variable_name: Name of the variable in the dataset to be sampled.
     """
     
     def __init__(self,
-                 diffusion_config_path: str,
-                 diffusion_model_checkpoint_path: str,
+                 #diffusion_config_path: str,
+                 #diffusion_model_checkpoint_path: str,
+                 config: dict,
                  noise_shape: tuple,
                  variable_name: str,
                  ):
         
-        self.diffusion_config = read_yaml(diffusion_config_path)
+        self.diffusion_config = config
         self.noise_shape = noise_shape
         self.variable_name = variable_name
-        self.diffusion_checkpoint_path = diffusion_model_checkpoint_path
+        self.diffusion_checkpoint_path = config["checkpoints"]["inference_ckpt"]
         self.parameters = {} 
 
     def load_data(self):
@@ -72,6 +74,7 @@ class Simulation():
 
         self.target_test_transformed = self.transforms.apply_transforms(self.target_test)
 
+        # initial conditions
         self.x_past = self.prepare_state(self.target_test_transformed[1])
         self.x_current = self.prepare_state(self.target_test_transformed[2])
 
