@@ -20,4 +20,4 @@ python training.py -c config/config_file.yml
 
 ## Model inference and sampling
 
-See notebooks in `notebooks/` for examples.
+See the Jyputer notebook [Constrained-vorticity-sampling.ipnyb](notebooks/Constrained-vorticity-sampling.ipnyb) for examples.
