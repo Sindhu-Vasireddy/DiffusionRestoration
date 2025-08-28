@@ -55,7 +55,13 @@ class Simulation():
         self.noise_shape = noise_shape
         self.variable_name = variable_name
         self.diffusion_checkpoint_path = config["checkpoints"]["inference_ckpt"]
+
         self.parameters = {} 
+        self.target_train = None
+        self.target_test = None
+        self.x_past = None
+        self.x_current = None
+        self.inference = None
 
     def load_data(self):
         """ Loads the data and precomputes training transforms and initial condition. """
