@@ -1,6 +1,6 @@
-# Constrained sampling with generative diffusion models
+# [ELLIS Summer School 2025](https://www.ellis-jena.eu/summer-school-2025/): AI for Earth and Climate Sciences <br><br> Research Challenge: <br><br> *Physically Consistent Reconstruction of Spatiotemporal Dynamics with Generative Diffusion Models*
 
-A playground for including constraints at inference in to generative diffusion models.
+This repository serves as a starting point and playground for solving inverse problems with diffusion models in a physically consistent manner.
 
 ## Installation
 
