@@ -1,7 +1,8 @@
 import sys
 import numpy as np
 import torch
-from tqdm.notebook import tqdm
+#from tqdm.notebook import tqdm
+from tqdm import tqdm
 import xarray as xr
 import pandas as pd
 from pathlib import Path

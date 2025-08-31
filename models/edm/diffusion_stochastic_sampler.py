@@ -1,6 +1,7 @@
 import sys
 import torch
-from tqdm.notebook import tqdm
+#from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 
 class GuidedKarrasSampler(torch.nn.Module):
