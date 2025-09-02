@@ -87,17 +87,19 @@ class Guidance:
         state of the diffusion process.
 
         Args:
-            state: Current state of the diffusion process.
-            prediction: Denoised prediction tensor from the diffusion model.        
+            state: Current state of the diffusion process. 
+            prediction: Denoised prediction tensor from the     model.        
             retain_graph: Whether to retain the computation graph for further backward passes.
         """
 
         prediction_no_trafo = self.transforms.apply_inverse_transforms(prediction)
-
-        loss = self.constraint(prediction_no_trafo, time_index)
-
+        if isinstance(self.constraint, list):
+            loss=0
+            for cons, gamma in zip(self.constraint, self.gamma):
+                loss += gamma * cons(prediction_no_trafo, time_index)
+        else:
+            loss = self.gamma*self.constraint(prediction_no_trafo, time_index)
         grad = torch.autograd.grad(loss, state, retain_graph=retain_graph)[0]
         grad = torch.clamp(grad, min=-1e8, max=1e8)
-
-        return self.gamma * grad
+        return grad
 
